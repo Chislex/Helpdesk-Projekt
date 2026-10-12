@@ -11,7 +11,6 @@ function App() {
   const [customerName, setCustomerName] = useState('');
   const [showHistory, setShowHistory] = useState(false);
 
-  // Tickets beim Start laden
   useEffect(() => {
     fetchTickets();
   }, []);
@@ -79,7 +78,6 @@ function App() {
     }
   };
 
-  // Für das Kanban-Board filtern wir gelöschte Tickets (Soft-Delete) heraus
   const activeTickets = tickets.filter(t => !t.is_deleted);
   const columns = ["Offen", "In Bearbeitung", "Geschlossen"];
 
@@ -142,10 +140,23 @@ function App() {
         ))}
       </section>
 
-      {/* Overlay für die Historie / Logbuch */}
       {showHistory && (
         <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', padding: '50px', overflowY: 'auto' }}>
           <div className="modal-content">
             <h2>Ticket Historie (Alle Tickets, auch gelöschte)</h2>
             <button onClick={() => setShowHistory(false)}>Schließen</button>
-            <ul style={{ marginTop
+            <ul style={{ marginTop: '20px' }}>
+              {tickets.map(ticket => (
+                <li key={ticket.id} style={{ marginBottom: '10px' }}>
+                  <strong>[{ticket.is_deleted ? "GELÖSCHT" : ticket.status}]</strong> - {ticket.title} (Kunde: {ticket.customer_name})
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
