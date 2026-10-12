@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-// HIER IST DEINE NEUE CLOUD-URL:
 const API_URL = "https://helpdesk-backend-o7h0.onrender.com";
 
 function App() {
@@ -85,7 +84,9 @@ function App() {
     <div className="app-container">
       <header>
         <h1>Helpdesk System</h1>
-        <button onClick={() => setShowHistory(true)}>Logbuch / Historie öffnen</button>
+        <button className="header-btn" onClick={() => setShowHistory(true)}>
+          Logbuch / Historie öffnen
+        </button>
       </header>
 
       <section className="ticket-form">
@@ -111,7 +112,7 @@ function App() {
             onChange={(e) => setDescription(e.target.value)} 
             required 
           />
-          <button type="submit">Ticket speichern</button>
+          <button type="submit" className="submit-btn">Ticket speichern</button>
         </form>
       </section>
 
@@ -132,7 +133,7 @@ function App() {
                   >
                     {columns.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  <button onClick={() => deleteTicket(ticket.id)}>Löschen</button>
+                  <button className="delete-btn" onClick={() => deleteTicket(ticket.id)}>Löschen</button>
                 </div>
               </div>
             ))}
@@ -141,14 +142,16 @@ function App() {
       </section>
 
       {showHistory && (
-        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', padding: '50px', overflowY: 'auto' }}>
+        <div className="modal-overlay">
           <div className="modal-content">
-            <h2>Ticket Historie (Alle Tickets, auch gelöschte)</h2>
-            <button onClick={() => setShowHistory(false)}>Schließen</button>
-            <ul style={{ marginTop: '20px' }}>
+            <button className="close-btn" onClick={() => setShowHistory(false)}>Schließen</button>
+            <h2>Ticket Historie (Alle Tickets)</h2>
+            <ul style={{ marginTop: '20px', paddingLeft: '20px' }}>
               {tickets.map(ticket => (
                 <li key={ticket.id} style={{ marginBottom: '10px' }}>
-                  <strong>[{ticket.is_deleted ? "GELÖSCHT" : ticket.status}]</strong> - {ticket.title} (Kunde: {ticket.customer_name})
+                  <strong style={{ color: ticket.is_deleted ? '#d32f2f' : '#4CAF50' }}>
+                    [{ticket.is_deleted ? "GELÖSCHT" : ticket.status}]
+                  </strong> - {ticket.title} (Kunde: {ticket.customer_name})
                 </li>
               ))}
             </ul>
