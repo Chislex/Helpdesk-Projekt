@@ -1,198 +1,165 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
+import './App.css';
+
+// HIER IST DEINE NEUE CLOUD-URL:
+const API_URL = "https://helpdesk-backend-o7h0.onrender.com";
 
 function App() {
-  const [tickets, setTickets] = useState([])
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [customerName, setCustomerName] = useState('')
-  
-  const [selectedTicket, setSelectedTicket] = useState(null)
-  const [editStatus, setEditStatus] = useState('Offen')
-  const [editNotes, setEditNotes] = useState('')
-  
-  const [showLog, setShowLog] = useState(false)
+  const [tickets, setTickets] = useState([]);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
 
+  // Tickets beim Start laden
   useEffect(() => {
-    fetch('http://127.0.0.1:3000/tickets')
-      .then(response => response.json())
-      .then(data => setTickets(data))
-      .catch(error => console.error(error))
-  }, [])
+    fetchTickets();
+  }, []);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newTicket = { title, description, customer_name: customerName };
-
-    fetch('http://127.0.0.1:3000/tickets', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newTicket),
-    })
-    .then(response => response.json())
-    .then(data => {
-      setTickets([...tickets, data]); 
-      setTitle(''); 
-      setDescription(''); 
-      setCustomerName(''); 
-    })
-    .catch(error => console.error(error));
-  };
-
-  const openTicket = (ticket) => {
-    setSelectedTicket(ticket);
-    setEditStatus(ticket.status || 'Offen');
-    setEditNotes(ticket.notes || '');
-  };
-
-  const handleUpdate = () => {
-    fetch(`http://127.0.0.1:3000/tickets/${selectedTicket.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: editStatus, notes: editNotes }),
-    })
-    .then(response => response.json())
-    .then(updatedTicket => {
-      setTickets(tickets.map(t => t.id === updatedTicket.id ? updatedTicket : t));
-      setSelectedTicket(null);
-    })
-    .catch(error => console.error(error));
-  };
-
-  const handleDelete = () => {
-    const isSure = window.confirm("Bist du sicher, dass du dieses Ticket komplett löschen möchtest?");
-    if (isSure) {
-      fetch(`http://127.0.0.1:3000/tickets/${selectedTicket.id}`, {
-        method: 'DELETE',
-      })
-      .then(response => response.json())
-      .then(deletedTicket => {
-        setTickets(tickets.map(t => t.id === deletedTicket.id ? deletedTicket : t));
-        setSelectedTicket(null); 
-      })
-      .catch(error => console.error(error));
+  const fetchTickets = async () => {
+    try {
+      const response = await fetch(`${API_URL}/tickets`);
+      const data = await response.json();
+      setTickets(data);
+    } catch (error) {
+      console.error("Fehler beim Laden der Tickets:", error);
     }
   };
 
-  const activeTickets = tickets.filter(t => !t.is_deleted);
-  
-  const ticketsOffen = activeTickets.filter(t => t.status === 'Offen' || !t.status);
-  const ticketsInBearbeitung = activeTickets.filter(t => t.status === 'in Bearbeitung');
-  const ticketsGeschlossen = activeTickets.filter(t => t.status === 'Geschlossen');
+  const createTicket = async (e) => {
+    e.preventDefault();
+    if (!title || !description || !customerName) return;
 
-  const renderTicketList = (listTitle, ticketList) => (
-    <div style={{ flex: 1, minWidth: '250px', backgroundColor: '#1e1e1e', padding: '15px', borderRadius: '8px' }}>
-      <h3 style={{ borderBottom: '1px solid #444', paddingBottom: '10px' }}>{listTitle} ({ticketList.length})</h3>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {ticketList.map(ticket => (
-          <li 
-            key={ticket.id} 
-            onClick={() => openTicket(ticket)}
-            style={{ border: '1px solid #444', margin: '10px 0', padding: '15px', borderRadius: '5px', cursor: 'pointer', backgroundColor: '#2a2a2a', transition: '0.2s' }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#3a3a3a'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#2a2a2a'}
-          >
-            <h4 style={{ margin: '0 0 10px 0' }}>{ticket.title}</h4>
-            <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#ffb347' }}>Kunde: {ticket.customer_name || 'Unbekannt'}</p>
-            <p style={{ margin: 0, fontSize: '14px', color: '#ccc' }}>
-              {ticket.description.substring(0, 40)}{ticket.description.length > 40 ? '...' : ''}
-            </p>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+    try {
+      const response = await fetch(`${API_URL}/tickets`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          customer_name: customerName
+        })
+      });
+      const newTicket = await response.json();
+      setTickets([...tickets, newTicket]);
+      setTitle('');
+      setDescription('');
+      setCustomerName('');
+    } catch (error) {
+      console.error("Fehler beim Erstellen:", error);
+    }
+  };
+
+  const updateStatus = async (id, newStatus, currentNotes) => {
+    try {
+      const response = await fetch(`${API_URL}/tickets/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status: newStatus,
+          notes: currentNotes || ""
+        })
+      });
+      const updatedTicket = await response.json();
+      setTickets(tickets.map(t => t.id === id ? updatedTicket : t));
+    } catch (error) {
+      console.error("Fehler beim Aktualisieren:", error);
+    }
+  };
+
+  const deleteTicket = async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/tickets/${id}`, {
+        method: 'DELETE'
+      });
+      const deletedTicket = await response.json();
+      setTickets(tickets.map(t => t.id === id ? deletedTicket : t));
+    } catch (error) {
+      console.error("Fehler beim Löschen:", error);
+    }
+  };
+
+  // Für das Kanban-Board filtern wir gelöschte Tickets (Soft-Delete) heraus
+  const activeTickets = tickets.filter(t => !t.is_deleted);
+  const columns = ["Offen", "In Bearbeitung", "Geschlossen"];
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '1200px', margin: '0 auto', color: '#fff', position: 'relative' }}>
-      <h1>Helpdesk System</h1>
-      
-      <button 
-        onClick={() => setShowLog(true)}
-        style={{ position: 'absolute', top: '25px', right: '20px', padding: '10px 20px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
-      >
-        Ticket-Logbuch
-      </button>
-      
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '30px', padding: '20px', border: '1px solid #444', borderRadius: '8px', backgroundColor: '#1e1e1e' }}>
-        <h3>Neues Ticket erstellen</h3>
-        <input 
-          type="text" placeholder="Titel (z.B. Internetausfall)" value={title} onChange={(e) => setTitle(e.target.value)} required
-          style={{ padding: '10px', borderRadius: '4px', border: '1px solid #444', backgroundColor: '#333', color: 'white' }}
-        />
-        <input 
-          type="text" placeholder="Kundenname / Firma" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required
-          style={{ padding: '10px', borderRadius: '4px', border: '1px solid #444', backgroundColor: '#333', color: 'white' }}
-        />
-        <textarea 
-          placeholder="Problembeschreibung..." value={description} onChange={(e) => setDescription(e.target.value)} required
-          style={{ padding: '10px', minHeight: '60px', borderRadius: '4px', border: '1px solid #444', fontFamily: 'inherit', backgroundColor: '#333', color: 'white' }}
-        />
-        <button type="submit" style={{ padding: '10px', cursor: 'pointer', backgroundColor: '#007BFF', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}>
-          Ticket absenden
-        </button>
-      </form>
+    <div className="app-container">
+      <header>
+        <h1>Helpdesk System</h1>
+        <button onClick={() => setShowHistory(true)}>Logbuch / Historie öffnen</button>
+      </header>
 
-      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-        {renderTicketList('Offen', ticketsOffen)}
-        {renderTicketList('In Bearbeitung', ticketsInBearbeitung)}
-        {renderTicketList('Geschlossen', ticketsGeschlossen)}
-      </div>
+      <section className="ticket-form">
+        <h2>Neues Ticket erstellen</h2>
+        <form onSubmit={createTicket}>
+          <input 
+            type="text" 
+            placeholder="Kundenname (Pflichtfeld)" 
+            value={customerName} 
+            onChange={(e) => setCustomerName(e.target.value)} 
+            required 
+          />
+          <input 
+            type="text" 
+            placeholder="Ticket Titel" 
+            value={title} 
+            onChange={(e) => setTitle(e.target.value)} 
+            required 
+          />
+          <textarea 
+            placeholder="Problembeschreibung" 
+            value={description} 
+            onChange={(e) => setDescription(e.target.value)} 
+            required 
+          />
+          <button type="submit">Ticket speichern</button>
+        </form>
+      </section>
 
-      {selectedTicket && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div style={{ backgroundColor: '#222', padding: '30px', borderRadius: '8px', maxWidth: '600px', width: '90%', border: '1px solid #555' }}>
-            <h2>{selectedTicket.title}</h2>
-            <p style={{ color: '#ffb347', marginBottom: '10px', fontWeight: 'bold' }}>Kunde: {selectedTicket.customer_name || 'Unbekannt'}</p>
-            <p style={{ color: '#ccc', marginBottom: '20px' }}>{selectedTicket.description}</p>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <label style={{ fontWeight: 'bold' }}>Status ändern:</label>
-              <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} style={{ padding: '10px', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', fontSize: '16px' }}>
-                <option value="Offen">Offen</option>
-                <option value="in Bearbeitung">in Bearbeitung</option>
-                <option value="Geschlossen">Geschlossen</option>
-              </select>
-
-              <label style={{ fontWeight: 'bold', marginTop: '10px' }}>Notizen / Verlauf:</label>
-              <textarea 
-                value={editNotes} onChange={(e) => setEditNotes(e.target.value)} placeholder="Hier eintragen, was bereits gemacht wurde..."
-                style={{ padding: '10px', minHeight: '120px', backgroundColor: '#333', color: 'white', border: '1px solid #555', borderRadius: '4px', fontFamily: 'inherit' }}
-              />
-
-              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-                <button onClick={handleUpdate} style={{ flex: 1, padding: '12px', cursor: 'pointer', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}>Speichern</button>
-                <button onClick={() => setSelectedTicket(null)} style={{ flex: 1, padding: '12px', cursor: 'pointer', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}>Schließen</button>
-                <button onClick={handleDelete} style={{ flex: 1, padding: '12px', cursor: 'pointer', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}>Löschen</button>
+      <section className="kanban-board" style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
+        {columns.map(colStatus => (
+          <div key={colStatus} className="kanban-column" style={{ flex: 1, border: '1px solid #ccc', padding: '10px' }}>
+            <h3>{colStatus}</h3>
+            {activeTickets.filter(t => t.status === colStatus).map(ticket => (
+              <div key={ticket.id} className="ticket-card" style={{ border: '1px solid #999', margin: '10px 0', padding: '10px' }}>
+                <h4>{ticket.title}</h4>
+                <p><strong>Kunde:</strong> {ticket.customer_name}</p>
+                <p>{ticket.description}</p>
+                
+                <div className="ticket-actions">
+                  <select 
+                    value={ticket.status} 
+                    onChange={(e) => updateStatus(ticket.id, e.target.value, ticket.notes)}
+                  >
+                    {columns.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                  <button onClick={() => deleteTicket(ticket.id)} style={{ marginLeft: '10px' }}>Löschen</button>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
-        </div>
-      )}
+        ))}
+      </section>
 
-      {showLog && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <div style={{ backgroundColor: '#1e1e1e', padding: '30px', borderRadius: '8px', maxWidth: '600px', width: '90%', border: '1px solid #555', maxHeight: '80vh', overflowY: 'auto' }}>
-            <h2 style={{ borderBottom: '1px solid #444', paddingBottom: '10px', marginBottom: '20px' }}>Gesamt-Logbuch</h2>
-            
-            <ul style={{ listStyle: 'none', padding: 0 }}>
-              {tickets.map(t => (
-                <li key={t.id} style={{ padding: '10px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>
-                    <strong>{t.title}</strong> (Kunde: {t.customer_name || 'Unbekannt'})
-                  </span>
-                  {t.is_deleted && <span style={{ color: '#dc3545', fontWeight: 'bold', marginLeft: '10px' }}>[GELÖSCHT]</span>}
+      {/* Overlay für die Historie / Logbuch */}
+      {showHistory && (
+        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.8)', color: 'white', padding: '50px', overflowY: 'auto' }}>
+          <div className="modal-content">
+            <h2>Ticket Historie (Alle Tickets, auch gelöschte)</h2>
+            <button onClick={() => setShowHistory(false)}>Schließen</button>
+            <ul style={{ marginTop: '20px' }}>
+              {tickets.map(ticket => (
+                <li key={ticket.id} style={{ marginBottom: '10px' }}>
+                  <strong>[{ticket.is_deleted ? "GELÖSCHT" : ticket.status}]</strong> - {ticket.title} (Kunde: {ticket.customer_name})
                 </li>
               ))}
             </ul>
-            
-            <button onClick={() => setShowLog(false)} style={{ width: '100%', marginTop: '20px', padding: '12px', cursor: 'pointer', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', fontWeight: 'bold' }}>
-              Logbuch schließen
-            </button>
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
