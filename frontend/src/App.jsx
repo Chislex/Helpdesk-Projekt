@@ -117,12 +117,12 @@ function App() {
         </form>
       </section>
 
-      <section className="kanban-board" style={{ display: 'flex', gap: '20px', marginTop: '20px' }}>
+      <section className="kanban-board">
         {columns.map(colStatus => (
-          <div key={colStatus} className="kanban-column" style={{ flex: 1, border: '1px solid #ccc', padding: '10px' }}>
+          <div key={colStatus} className="kanban-column">
             <h3>{colStatus}</h3>
             {activeTickets.filter(t => t.status === colStatus).map(ticket => (
-              <div key={ticket.id} className="ticket-card" style={{ border: '1px solid #999', margin: '10px 0', padding: '10px' }}>
+              <div key={ticket.id} className="ticket-card">
                 <h4>{ticket.title}</h4>
                 <p><strong>Kunde:</strong> {ticket.customer_name}</p>
                 <p>{ticket.description}</p>
@@ -134,7 +134,7 @@ function App() {
                   >
                     {columns.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
-                  <button onClick={() => deleteTicket(ticket.id)} style={{ marginLeft: '10px' }}>Löschen</button>
+                  <button onClick={() => deleteTicket(ticket.id)}>Löschen</button>
                 </div>
               </div>
             ))}
@@ -148,18 +148,4 @@ function App() {
           <div className="modal-content">
             <h2>Ticket Historie (Alle Tickets, auch gelöschte)</h2>
             <button onClick={() => setShowHistory(false)}>Schließen</button>
-            <ul style={{ marginTop: '20px' }}>
-              {tickets.map(ticket => (
-                <li key={ticket.id} style={{ marginBottom: '10px' }}>
-                  <strong>[{ticket.is_deleted ? "GELÖSCHT" : ticket.status}]</strong> - {ticket.title} (Kunde: {ticket.customer_name})
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default App;
+            <ul style={{ marginTop
