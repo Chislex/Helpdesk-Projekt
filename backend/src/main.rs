@@ -65,10 +65,10 @@ async fn main() {
     let cors = CorsLayer::permissive();
 
     let app = Router::new()
+        .layer(cors)
         .route("/", get(root))
         .route("/tickets", post(create_ticket).get(get_tickets))
         .route("/tickets/:id", put(update_ticket).delete(delete_ticket))
-        .layer(cors)
         .with_state(pool);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
