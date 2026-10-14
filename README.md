@@ -20,4 +20,4 @@ Das gesamte Projekt ist vollst채ndig dockerisiert. Es m체ssen keine lokalen Abh�
 
 1. Repository klonen: git clone (https://github.com/Chislex/Helpdesk-Projekt/tree/main)
 2. Container bauen und starten: docker compose up --build -d
-3. Die Web-Oberfl채che ist nun unter http://localhost:5173 erreichbar. Das Backend l채uft unter http://localhost:3000.
+3. Die Web-Oberfl채che ist nun unter [http://localhost:5174](http://localhost:5174/) erreichbar. Das Backend l채uft unter http://localhost:3000.
